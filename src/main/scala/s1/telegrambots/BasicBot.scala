@@ -36,7 +36,7 @@ class BasicBot extends TelegramBot with Polling with Commands with Callbacks {
   def getString(msg: Message) = {
     val str = msg.text.getOrElse("")
     if (str.startsWith("/"))
-      str.dropWhile(_ != ' ').tail
+      str.dropWhile(_ != ' ').drop(1) // Drops everything until the first space, and then the space itself
     else
       str
     }
@@ -51,6 +51,18 @@ class BasicBot extends TelegramBot with Polling with Commands with Callbacks {
   def getUserFirstName(msg: Message) = msg.from.map(_.firstName).mkString
 
   /**
+   * Extracts a chat id from a message.
+   *
+   * A chat id can be used to later write text to the chat using the writeToChat
+   * method.
+   *
+   * @param msg any message written into the chat
+   * @return the chat id
+   */
+
+  def getChatId(msg: Message) = msg.chat.id
+
+  /**
     * Reacts and responds to a named command with arguments, i.e. extra words after command,
     * using the function provided as a parameter.
     *
@@ -58,6 +70,7 @@ class BasicBot extends TelegramBot with Polling with Commands with Callbacks {
     * @param action  A method that reacts to arguments and returns a string to send as a reply
     * @return
     */
+
   def commandWithArguments(command: String, action: Seq[String] => String) = {
     onCommand(command) { implicit msg =>
       withArgs {
@@ -220,14 +233,22 @@ class BasicBot extends TelegramBot with Polling with Commands with Callbacks {
     request(methods.EditMessageText(Some(chatId), Some(messageId), text = newText))
   }
 
+
   /**
-    * Sends the user a message with the given text.
+    * Sends the user a message with the given text. Can be used at any time.
+    *
+    * Note that chat ids can be extracted from any message using getChatId(message)
+    *
     * @param text The text of the message to be sent to the user.
     * @return
+    * @see getChatId(msg: Message)
     */
+  def writeToChat(text: String, selectedChatId: ChatId) = {
+    request(SendMessage(selectedChatId, text, parseMode = Some(ParseMode.HTML)))
+  }
+
+  // Use writeToChat
   def respond(text: String) = {
     request(SendMessage(chatId, text, parseMode = Some(ParseMode.HTML)))
   }
-
-
 }
