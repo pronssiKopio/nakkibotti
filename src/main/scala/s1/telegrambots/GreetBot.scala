@@ -25,7 +25,8 @@ object GreetBot extends App {
 
      /**
       * rekisteröi botille uuden toiminnon joka ajetaan aina kun
-      * kanavalle tulee uusi käyttäjä.
+      * kanavalle tulee uusi käyttäjä. Toiminnon tulee ottaa parametrina
+      * User ja palauttaa String
       */
      this.joinMessage(tervehdi)
 
