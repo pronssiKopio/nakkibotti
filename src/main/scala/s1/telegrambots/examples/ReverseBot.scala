@@ -37,6 +37,4 @@ object ReverseBot extends App {
     println("Started")
   }
 
-
-  //synchronized{wait()}
 }
