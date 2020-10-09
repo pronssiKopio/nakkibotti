@@ -4,7 +4,7 @@ import info.mukel.telegrambot4s._
 
 import api._
 import methods.{SendMessage, _}
-import models.{InlineKeyboardButton, InlineKeyboardMarkup, _}
+import models.{InlineKeyboardButton, InlineKeyboardMarkup, InputFile, _}
 import declarative._
 
 /**
@@ -12,7 +12,7 @@ import declarative._
   * actual requests to Telegram API.
   * It is not necessary for the students taking this course to understand the contents of this file.
   */
-class BasicBot extends TelegramBot with Polling with Commands with Callbacks {
+class BasicBot extends TelegramBot with Polling with Commands with Callbacks with ChatActions {
 
 
   // Housekeeping: token, URLS, etc.
@@ -250,5 +250,16 @@ class BasicBot extends TelegramBot with Polling with Commands with Callbacks {
   // Use writeToChat
   def respond(text: String) = {
     request(SendMessage(chatId, text, parseMode = Some(ParseMode.HTML)))
+  }
+
+  /**
+   * Sends a photo into the chat
+   *
+   * @param filename Filename of the photo
+   * @param selectedChatId Chat id where to send the image
+   */
+  def sendPhoto(filename: String, selectedChatId: ChatId): Unit = {
+    val photo = InputFile(java.nio.file.Paths.get(filename))
+    request(SendPhoto(selectedChatId, photo))
   }
 }
