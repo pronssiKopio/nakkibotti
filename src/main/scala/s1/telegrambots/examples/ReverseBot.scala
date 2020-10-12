@@ -25,11 +25,16 @@ object ReverseBot extends App {
       */
     def nurinpain(s: String) = s.reverse
 
+    def tervehdys(s: Message) = "Moikka!!"
+
+
     /**
       * rekisteröi botille uuden toiminnon joka ajetaan aina kun
       * kanavalle kirjoitetaan jotain.
       */
     this.replyToString(nurinpain)
+
+    this.command("start", tervehdys)
 
     // Lopuksi Botti pitää vielä saada käyntiin
     this.run()
