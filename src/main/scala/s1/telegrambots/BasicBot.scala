@@ -1,22 +1,34 @@
 package s1.telegrambots
 
-import info.mukel.telegrambot4s._
+import scala.concurrent.Future
 
-import api._
-import methods.{SendMessage, _}
-import models.{InlineKeyboardButton, InlineKeyboardMarkup, InputFile, _}
-import declarative._
+import com.bot4s.telegram.future.{Polling, TelegramBot}
+import com.bot4s.telegram.api.declarative.{Commands, Callbacks}
+import com.bot4s.telegram.api.RequestHandler
+import com.bot4s.telegram.clients.ScalajHttpClient
+
+import com.bot4s.telegram.api.ChatActions
+import com.bot4s.telegram._
+import com.bot4s.telegram.methods.{SendMessage, _}
+import com.bot4s.telegram.models.{InlineKeyboardButton, InlineKeyboardMarkup, InputFile, _}
 
 /**
   * A wrapper class that wraps more complicated or advanced functionality such as loading images and making
   * actual requests to Telegram API.
   * It is not necessary for the students taking this course to understand the contents of this file.
   */
-class BasicBot extends TelegramBot with Polling with Commands with Callbacks with ChatActions {
+class BasicBot extends TelegramBot with Polling with Commands[Future] with Callbacks[Future] with ChatActions[Future] {
 
 
   // Housekeeping: token, URLS, etc.
-  def token = scala.io.Source.fromFile("bot_token.txt").mkString.trim
+  def token = {
+    val source = scala.io.Source.fromFile("bot_token.txt")  // Not try here - if bot token does not exist this should fail
+    val result = source.mkString.trim
+    source.close()
+    result
+  }
+
+  override val client: RequestHandler[Future] = new ScalajHttpClient(token)
 
   private var chatId: ChatId = _
   private var message: Message = _
@@ -24,7 +36,7 @@ class BasicBot extends TelegramBot with Polling with Commands with Callbacks wit
   private var messageId: Int = _
 
   type Button = InlineKeyboardButton
-  type Message = info.mukel.telegrambot4s.models.Message
+  type Message = com.bot4s.telegram.models.Message
 
  /**
   * Extracts the text from a Message object.
@@ -74,7 +86,7 @@ class BasicBot extends TelegramBot with Polling with Commands with Callbacks wit
   def commandWithArguments(command: String, action: Seq[String] => String) = {
     onCommand(command) { implicit msg =>
       withArgs {
-        args => request(SendMessage(msg.chat.id, action(args), parseMode = Some(ParseMode.HTML)))
+        args => request(SendMessage(msg.chat.id, action(args), parseMode = Some(ParseMode.HTML))).map(_->())
       }
     }
   }
@@ -87,8 +99,9 @@ class BasicBot extends TelegramBot with Polling with Commands with Callbacks wit
     * @return
     */
   def command(command: String, action: Message => String) = {
-    onCommand(command) { implicit msg => request(SendMessage(ChatId.fromChat(msg.chat.id), action(msg), parseMode = Some(ParseMode.HTML))) }
+    onCommand(command) { implicit msg => request(SendMessage(ChatId.fromChat(msg.chat.id), action(msg), parseMode = Some(ParseMode.HTML))).map(_ => ()) }
   }
+
 
   /**
     * Reacts to any messages on the channel (Note that most channels don't allow this)
@@ -97,7 +110,7 @@ class BasicBot extends TelegramBot with Polling with Commands with Callbacks wit
     * @return
     */
   def anyString(action: String => Unit) = onMessage {
-    implicit msg => action(msg.text.mkString)
+    implicit msg => Future(action(msg.text.mkString))
   }
 
   /**
@@ -108,8 +121,10 @@ class BasicBot extends TelegramBot with Polling with Commands with Callbacks wit
     */
 
   def replyToString(action: String => String) = onMessage {
-    implicit msg => reply(action(msg.text.mkString))
+    implicit msg => reply(action(msg.text.mkString)).map(_=>())
   }
+
+
 
   /**
     * Reacts to any messages on the channel sending back a new string. (Note that most channels don't allow this, but only give commands to bots)
@@ -119,7 +134,7 @@ class BasicBot extends TelegramBot with Polling with Commands with Callbacks wit
     */
 
   def replyToMessage(action: Message => String) = onMessage {
-    implicit msg => reply(action(msg))
+    implicit msg => reply(action(msg)).map(_=>())
   }
 
 
@@ -131,7 +146,7 @@ class BasicBot extends TelegramBot with Polling with Commands with Callbacks wit
     */
 
   def anyMessage(action: Message => Unit)   = onMessage {
-    implicit msg => action(msg)
+    implicit msg => Future(action(msg))
   }
 
   /**
@@ -142,10 +157,12 @@ class BasicBot extends TelegramBot with Polling with Commands with Callbacks wit
     */
 
   def joinMessage(action: User => String) = onMessage {
-    implicit msg => for {
-      members <- msg.newChatMembers
-      member  <- members
-    } reply(action(member))
+    implicit msg => Future {
+      for {
+        members <- msg.newChatMembers
+        member  <- members
+      } reply(action(member)).map(_ => ())
+    }
   }
 
   /**
@@ -156,7 +173,7 @@ class BasicBot extends TelegramBot with Polling with Commands with Callbacks wit
     */
 
   def leaveMessage(action: User => Unit) = onMessage {
-    implicit msg => {
+    implicit msg => Future {
       msg.leftChatMember.foreach {
         user => action(user)
       }
@@ -176,7 +193,7 @@ class BasicBot extends TelegramBot with Polling with Commands with Callbacks wit
   def commandWithInlineKeyboard(command: String, replyMessage: String, keyboard: Seq[Seq[Button]]) = {
     onCommand(command) { implicit msg =>
       val kb = InlineKeyboardMarkup.apply(keyboard)
-      request(SendMessage(ChatId.fromChat(msg.chat.id), replyMessage, replyMarkup = Some(kb), parseMode = Some(ParseMode.HTML)))
+      request(SendMessage(ChatId.fromChat(msg.chat.id), replyMessage, replyMarkup = Some(kb), parseMode = Some(ParseMode.HTML))).map(_ => ())
     }
 
   }
@@ -212,9 +229,7 @@ class BasicBot extends TelegramBot with Polling with Commands with Callbacks wit
         chatId    = ChatId.fromChat(message.chat.id)
         messageId = message.messageId
 
-        action(data)
-
-
+        Future(action(data))
     }
   }
 
@@ -262,4 +277,17 @@ class BasicBot extends TelegramBot with Polling with Commands with Callbacks wit
     val photo = InputFile(java.nio.file.Paths.get(filename))
     request(SendPhoto(selectedChatId, photo))
   }
+
+
+  /**
+    * A built-in kill switch system. Disable it if needed by overriding killSwitch
+    */
+  def killSwitch() = {
+    Console.err.println("Shutting down")
+    System.exit(0)
+    "Quitting"
+  }
+
+  command("kill", message => killSwitch())
+
 }

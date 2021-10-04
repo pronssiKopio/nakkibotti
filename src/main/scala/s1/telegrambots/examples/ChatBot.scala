@@ -1,6 +1,7 @@
 package s1.telegrambots.examples
 
-import info.mukel.telegrambot4s.models.{ChatId, Message}
+import com.bot4s.telegram.models.{ChatId, Message}
+
 import s1.telegrambots.BasicBot
 
 import scala.collection.mutable.{Buffer, Map}

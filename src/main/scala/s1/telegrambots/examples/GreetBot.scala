@@ -1,6 +1,6 @@
 package s1.telegrambots.examples
 
-import info.mukel.telegrambot4s.models.User
+import com.bot4s.telegram.models.User
 import s1.telegrambots.BasicBot
 
 /**
