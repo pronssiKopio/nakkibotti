@@ -4,7 +4,7 @@ This projects serves as a means of testing and developing Telegram bots for Prog
 
 Your bot will *inherit* a Basic Bot, which gives you a list of useful commands:
 
-https://version.aalto.fi/gitlab/studio-1-2021/botti_2021/-/blob/master/src/main/scala/s1/telegrambots/BasicBot.scala
+https://version.aalto.fi/gitlab/oseppala/botti_2021/-/blob/master/src/main/scala/s1/telegrambots/BasicBot.scala
 
 **You don't need to understand how the methods are implemented.**
 
@@ -14,7 +14,7 @@ The bot is then told to run that method any time any text is written to the chat
 
 see the example here:
 
-https://version.aalto.fi/gitlab/studio-1-2021/botti_2021/-/blob/master/src/main/scala/s1/telegrambots/examples/ReverseBot.scala
+https://version.aalto.fi/gitlab/oseppala/botti_2021/-/blob/master/src/main/scala/s1/telegrambots/examples/ReverseBot.scala
 
 
 
