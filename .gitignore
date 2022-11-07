@@ -2,7 +2,9 @@ bot_token.txt
 .idea
 .bloop
 .metals
+.vscode
 target
 project/bloop
 project/project
 project/target
+project/metals.sbt
