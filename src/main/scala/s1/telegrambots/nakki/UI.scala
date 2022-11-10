@@ -42,9 +42,17 @@ object UI extends App {
       else currentEvent(message).get.taskList
     }
 
+    def startMessage(message: Message) = {
+      "Welcome to Nakkibotti!\n"+
+        "/newevent [event name] to create a new event\n"+
+        "/join [invite code] to join an event\n"+
+        "/help for all commands"
+    }
+
     this.command("createevent", createEvent)
     this.command("createtask", createTask)
     this.command("tasks", listTasks)
+    this.command("start", startMessage)
 
 
     // Lopuksi Botti pitää vielä saada käyntiin
