@@ -6,6 +6,7 @@ import collection.mutable.Map
 
 object UI extends App {
 
+  // TODO: DB integration goes here
   val events = Buffer[Event]()
 
   /**  Listataaan, mikä tapahtuma käyttäjällä on aktiivisena, ettei joka komennon yhteydessä tarvitse kertoa tapahtumaa*/
