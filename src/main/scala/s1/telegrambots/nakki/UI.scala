@@ -1,30 +1,67 @@
 package s1.telegrambots.nakki
 import s1.telegrambots.BasicBot
+import com.bot4s.telegram.models.Message
 
-import collection.mutable.Buffer
-import collection.mutable.Map
+import collection.mutable.{Buffer, Map}
 
 object UI extends App {
 
-  // TODO: DB integration goes here
-  val events = Buffer[Event]()
-
-  /**  Listataaan, mikä tapahtuma käyttäjällä on aktiivisena, ettei joka komennon yhteydessä tarvitse kertoa tapahtumaa*/
-  val inEvent: Map[Long, Option[Event]] = Map()
-
   val bot = new BasicBot() {
-    private def currentEvent(message: Message) = inEvent(message.from.get.id)
 
+    def parseInput(msg : Message, spacesAllowed : Boolean, specialCharAllowed : Boolean, emptyArgsAllowed : Boolean) : Either[Vector[String], String] = {
+      val retVec = getString(msg).split(Constants.argSeparator).map(_.trim()).toVector
 
-    def createEvent(message: Message): String = {
-      val name = getString(message)
-      val e = new Event(name, events.size)
-      val u = new User(message.from.get.id.toString, message.from.get.firstName, e, true)
-      inEvent += message.from.get.id -> Some(e)
-      events += e
+      if (!spacesAllowed) {
+        if (!retVec.forall(_.forall(!_.isSpaceChar))) return Right("Spaces are not allowed in this input")
+      }
 
-      "You have now created and entered " + name +
-      "\nInvite others using the access code: " + e.accessCode
+      if (!specialCharAllowed) {
+        if (!retVec.forall(_.forall(c => c.isLetterOrDigit || c.isWhitespace))) return Right("You can only use letters, numbers, and whitespace characters in this input")
+      }
+
+      if (!emptyArgsAllowed) {
+        if (!retVec.forall(!_.isEmpty())) return Right("Empty arguments are not allowed in this input")
+      }
+
+      Left(retVec)
+    }
+
+    def createEvent(msg: Message): String = {
+      val args = parseInput(msg, true, false, false)
+      
+      args match {
+        case Right(s) =>
+          return s
+        case Left(v) =>
+          val eventName = v(0)
+          val (code, e) = Event.createEvent(eventName)
+
+          // add user to users
+          val addUserRep = addUser(msg)
+          
+          // add user to event
+          addUserToEvent(msg, e)
+
+          "You have now created and entered " + eventName +
+          "\nInvite others using the access code: " + e.id
+      }
+    }
+
+    def addUser(msg : Message) : String = {
+      val id = msg.chat.id
+      val name = msg.from.map(_.firstName).getOrElse("").filterNot(_.isWhitespace)
+
+      if (name.isEmpty) {
+        "Username cannot be empty"
+      } else {
+        TGUser.addUser(id, name)
+      }
+    }
+
+    def addUserToEvent(msg : Message, event : Event) : String = {
+      val id = msg.chat.id
+
+      TGUser.addUserToEvent(id, event)
     }
 
     def createTask(message: Message): String = {

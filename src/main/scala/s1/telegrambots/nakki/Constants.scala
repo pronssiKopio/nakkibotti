@@ -4,5 +4,6 @@ object Constants {
 
   // The length of the event invite code
   val AccessCodeLength = 6
+  val argSeparator = ";"
 
 }
