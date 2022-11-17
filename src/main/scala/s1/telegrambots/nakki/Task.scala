@@ -2,12 +2,20 @@ package s1.telegrambots.nakki
 
 import scala.collection.mutable.Buffer
 
+object taskState extends Enumeration {
+  type taskState = Value
+  val notAvailable, available, waitingForMembers, workInProgress, complete = Value
+}
+import taskState._
+
+// make sure this has been changed for the new version
 class Task(var name: String, var maxPpl: Int, event: Event){
   var description: String = ""
   var points: Int = 0
-  var status = "not_available"
-  val users = Buffer[User]()
+  var status : taskState = notAvailable
+  val users = Buffer[Participant]()
 
   override def toString = name + ", "+ points + " points, " + status2emoji(status)
-  val status2emoji = Map("not_available" -> "🔜")
+  val status2emoji = Map(notAvailable -> "🔜")
 }
+

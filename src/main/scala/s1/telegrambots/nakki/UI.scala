@@ -1,46 +1,87 @@
 package s1.telegrambots.nakki
 import s1.telegrambots.BasicBot
+import com.bot4s.telegram.models.Message
 
-import collection.mutable.Buffer
-import collection.mutable.Map
+import collection.mutable.{Buffer, Map}
 
 object UI extends App {
 
-  // TODO: DB integration goes here
-  val events = Buffer[Event]()
-
-  /**  Listataaan, mikä tapahtuma käyttäjällä on aktiivisena, ettei joka komennon yhteydessä tarvitse kertoa tapahtumaa*/
-  val inEvent: Map[Long, Option[Event]] = Map()
-
   val bot = new BasicBot() {
-    private def currentEvent(message: Message) = inEvent(message.from.get.id)
 
 
-    def createEvent(message: Message): String = {
-      val name = getString(message)
-      val e = new Event(name, events.size)
-      val u = new User(message.from.get.id.toString, message.from.get.firstName, e, true)
-      inEvent += message.from.get.id -> Some(e)
-      events += e
+    // Right has the desired return, left has an error message.
+    def parseInput(msg : Message, spacesAllowed : Boolean, specialCharAllowed : Boolean, emptyArgsAllowed : Boolean) : Either[String, Vector[String]] = {
+      val retVec = getString(msg).split(Constants.argSeparator).map(_.trim()).toVector
 
-      "You have now created and entered " + name +
-      "\nInvite others using the access code: " + e.accessCode
+      // checking for any spaces
+      if (!spacesAllowed) {
+        if (!retVec.forall(_.forall(!_.isSpaceChar))) return Left("Spaces are not allowed in this input")
+      }
+
+      // only letters, numbers, and whitespace
+      if (!specialCharAllowed) {
+        if (!retVec.forall(_.forall(c => c.isLetterOrDigit || c.isWhitespace))) return Left("You can only use letters, numbers, and whitespace characters in this input")
+      }
+
+      // whether empty arguments are allowed
+      if (!emptyArgsAllowed) {
+        if (!retVec.forall(!_.isEmpty())) return Left("Empty arguments are not allowed in this input")
+      }
+
+      Right(retVec)
     }
 
-    def createTask(message: Message): String = {
-      if (currentEvent(message).isEmpty) return "Enter or create an event to create tasks"
-      val input = getString(message).split("[,\n]").map(_.trim)
-      val name = input(0)
-      val maxPpl = input(1)
-      val event = currentEvent(message).get
-      val t = new Task(name, maxPpl.toInt, event)
-      event.tasks += t
-      t.toString
+    def createEvent(msg: Message): String = {
+      val args = parseInput(msg, true, false, false)
+      
+      args match {
+        case Left(s) =>
+          return s
+        case Right(v) =>
+          val eventName = v(0)
+          val (code, e) = Event.createEvent(eventName)
+
+          var additionalText = ""
+          
+          // add user to users
+          if (!TGUser.userExists(msg.chat.id)) {
+            addUser(msg) match {
+              case Left(s) =>
+                return s
+              case Right(s) =>
+                additionalText += s
+            }
+          }
+          
+          // add user to event
+          addUserToEvent(msg, e) match {
+            case Left(s) =>
+              return s
+            case Right(s) =>
+              additionalText += s"\n$s"
+          }
+
+          "You have succesfully created " + eventName +
+          "\nInvite others using the access code: " + e.id +
+          s"\n${additionalText}"
+      }
     }
 
-    def listTasks(message: Message): String = {
-      if (currentEvent(message).isEmpty) "Enter or create an event to list tasks"
-      else currentEvent(message).get.taskList
+    def addUser(msg : Message) : Either[String, String] = {
+      val id = msg.chat.id
+      val name = msg.from.map(_.firstName).getOrElse("").filterNot(_.isWhitespace)
+
+      if (name.isEmpty) {
+        Left("Username cannot be empty")
+      } else {
+        TGUser.addUser(id, name)
+      }
+    }
+
+    def addUserToEvent(msg : Message, event : Event) : Either[String, String] = {
+      val id = msg.chat.id
+
+      TGUser.addUserToEvent(id, event)
     }
 
     def startMessage(message: Message) = {
@@ -51,8 +92,6 @@ object UI extends App {
     }
 
     this.command("createevent", createEvent)
-    this.command("createtask", createTask)
-    this.command("tasks", listTasks)
     this.command("start", startMessage)
 
 
