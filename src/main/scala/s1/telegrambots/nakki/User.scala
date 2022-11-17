@@ -1,5 +1,5 @@
 package s1.telegrambots.nakki
-import scala.collection.mutable.HashMap
+import scala.collection.mutable.{HashMap, Buffer}
 import com.bot4s.telegram.models.Message
 
 
@@ -7,20 +7,20 @@ object TGUser {
   val userMap = HashMap[Long, TGUser]()
   def users = userMap.values.toVector
 
-  def addUser(id : Long, name : String) : String = {
+  def addUser(id : Long, name : String) : Either[String, String] = {
 
     if (userMap.get(id).isDefined) {
-      "User already exists"
+      Left("User already exists")
     } else {
       userMap += (id -> new TGUser(id, name))
-      "Succesfully added user!"
+      Right(s"Succesfully added user ${name}!")
     }
   }
 
-  def addUserToEvent(id : Long, event : Event) : String = {
+  def addUserToEvent(id : Long, event : Event) : Either[String, String] = {
     userMap.get(id) match {
       case None =>
-        "User does not exist"
+        Left("User does not exist")
       case Some(u) =>
         u.addEvent(event)
     }
@@ -30,20 +30,24 @@ object TGUser {
     ???
   }
 
+  def userExists(id : Long) : Boolean = {
+    userMap.get(id).isDefined
+  }
+
 }
 
 class TGUser(val telegramId: Long, var name: String) {
-  var events = Vector[Event]()
+  var events = Buffer[Event]()
   var currentEvent : Option[Event] = None
 
-  def addEvent(event : Event) : String = {
+  def addEvent(event : Event) : Either[String, String] = {
     if (events.contains(event)) {
-      "User is already in that event"
+      Left("User is already in that event")
     } else {
-      events = events :+ event
+      events += event
       currentEvent = Some(event)
 
-      "Succesfully added user to event " + event.name
+      Right(s"Succesfully added ${name} to " + event.name)
     }
   }
 

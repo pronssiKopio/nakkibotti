@@ -25,6 +25,7 @@ object Event {
     str
   }
 
+  // does not return an Either because this should not be able to fail ever
   def createEvent(eventName : String) : (String, Event) = {
     val code = GAC
     val event = new Event(eventName, code)
@@ -34,12 +35,25 @@ object Event {
 
 }
 
-// add Participant class TODO
+
+object participantState extends Enumeration {
+  type participantState = Value
+  val free, busy = Value
+}
+import participantState._
+
+class Participant(var user : TGUser, var admin : Boolean = false) {
+  var points = 0
+  var state : participantState = free
+}
 
 // The access code doubles as the ID, as they're all unique
 class Event(var name: String, val id: String ) {
   
+  var participants = Buffer[Participant]()
+
   var description: String = ""
+  var hasStarted = false
 
   val tasks: Buffer[Task] = Buffer()
   def taskList: String =

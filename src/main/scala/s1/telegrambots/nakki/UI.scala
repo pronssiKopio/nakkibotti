@@ -8,57 +8,77 @@ object UI extends App {
 
   val bot = new BasicBot() {
 
-    def parseInput(msg : Message, spacesAllowed : Boolean, specialCharAllowed : Boolean, emptyArgsAllowed : Boolean) : Either[Vector[String], String] = {
+
+    // Right has the desired return, left has an error message.
+    def parseInput(msg : Message, spacesAllowed : Boolean, specialCharAllowed : Boolean, emptyArgsAllowed : Boolean) : Either[String, Vector[String]] = {
       val retVec = getString(msg).split(Constants.argSeparator).map(_.trim()).toVector
 
+      // checking for any spaces
       if (!spacesAllowed) {
-        if (!retVec.forall(_.forall(!_.isSpaceChar))) return Right("Spaces are not allowed in this input")
+        if (!retVec.forall(_.forall(!_.isSpaceChar))) return Left("Spaces are not allowed in this input")
       }
 
+      // only letters, numbers, and whitespace
       if (!specialCharAllowed) {
-        if (!retVec.forall(_.forall(c => c.isLetterOrDigit || c.isWhitespace))) return Right("You can only use letters, numbers, and whitespace characters in this input")
+        if (!retVec.forall(_.forall(c => c.isLetterOrDigit || c.isWhitespace))) return Left("You can only use letters, numbers, and whitespace characters in this input")
       }
 
+      // whether empty arguments are allowed
       if (!emptyArgsAllowed) {
-        if (!retVec.forall(!_.isEmpty())) return Right("Empty arguments are not allowed in this input")
+        if (!retVec.forall(!_.isEmpty())) return Left("Empty arguments are not allowed in this input")
       }
 
-      Left(retVec)
+      Right(retVec)
     }
 
     def createEvent(msg: Message): String = {
       val args = parseInput(msg, true, false, false)
       
       args match {
-        case Right(s) =>
+        case Left(s) =>
           return s
-        case Left(v) =>
+        case Right(v) =>
           val eventName = v(0)
           val (code, e) = Event.createEvent(eventName)
 
+          var additionalText = ""
+          
           // add user to users
-          val addUserRep = addUser(msg)
+          if (!TGUser.userExists(msg.chat.id)) {
+            addUser(msg) match {
+              case Left(s) =>
+                return s
+              case Right(s) =>
+                additionalText += s
+            }
+          }
           
           // add user to event
-          addUserToEvent(msg, e)
+          addUserToEvent(msg, e) match {
+            case Left(s) =>
+              return s
+            case Right(s) =>
+              additionalText += s"\n$s"
+          }
 
-          "You have now created and entered " + eventName +
-          "\nInvite others using the access code: " + e.id
+          "You have succesfully created " + eventName +
+          "\nInvite others using the access code: " + e.id +
+          s"\n${additionalText}"
       }
     }
 
-    def addUser(msg : Message) : String = {
+    def addUser(msg : Message) : Either[String, String] = {
       val id = msg.chat.id
       val name = msg.from.map(_.firstName).getOrElse("").filterNot(_.isWhitespace)
 
       if (name.isEmpty) {
-        "Username cannot be empty"
+        Left("Username cannot be empty")
       } else {
         TGUser.addUser(id, name)
       }
     }
 
-    def addUserToEvent(msg : Message, event : Event) : String = {
+    def addUserToEvent(msg : Message, event : Event) : Either[String, String] = {
       val id = msg.chat.id
 
       TGUser.addUserToEvent(id, event)
