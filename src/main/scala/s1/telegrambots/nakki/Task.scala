@@ -8,6 +8,7 @@ object taskState extends Enumeration {
 }
 import taskState._
 
+// make sure this has been changed for the new version
 class Task(var name: String, var maxPpl: Int, event: Event){
   var description: String = ""
   var points: Int = 0

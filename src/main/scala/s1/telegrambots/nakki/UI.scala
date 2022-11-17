@@ -84,24 +84,6 @@ object UI extends App {
       TGUser.addUserToEvent(id, event)
     }
 
-    // broken
-    // def createTask(message: Message): String = {
-    //   if (currentEvent(message).isEmpty) return "Enter or create an event to create tasks"
-    //   val input = getString(message).split("[,\n]").map(_.trim)
-    //   val name = input(0)
-    //   val maxPpl = input(1)
-    //   val event = currentEvent(message).get
-    //   val t = new Task(name, maxPpl.toInt, event)
-    //   event.tasks += t
-    //   t.toString
-    // }
-
-    // broken
-    // def listTasks(message: Message): String = {
-    //   if (currentEvent(message).isEmpty) "Enter or create an event to list tasks"
-    //   else currentEvent(message).get.taskList
-    // }
-
     def startMessage(message: Message) = {
       "Welcome to Nakkibotti!\n"+
         "/newevent [event name] to create a new event\n"+
@@ -110,8 +92,6 @@ object UI extends App {
     }
 
     this.command("createevent", createEvent)
-    // this.command("createtask", createTask)
-    // this.command("tasks", listTasks)
     this.command("start", startMessage)
 
 
