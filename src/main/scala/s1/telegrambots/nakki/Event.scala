@@ -2,7 +2,6 @@ package s1.telegrambots.nakki
 
 import util.Random.alphanumeric
 import collection.mutable.Buffer
-import scala.collection.mutable.HashMap
 
 object Event {
 
@@ -30,7 +29,8 @@ object Event {
     // should throw error if eventName is empty (not return an either left, but throw an error)
     val code = GAC
     val event = new Event(eventName, code)
-    eventMap += (GAC -> event)
+    eventMap += (code -> event)
+    println(code)
     (code, event)
   }
 

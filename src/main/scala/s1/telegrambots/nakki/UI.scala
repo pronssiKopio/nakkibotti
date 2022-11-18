@@ -1,8 +1,6 @@
 package s1.telegrambots.nakki
 import s1.telegrambots.BasicBot
-import com.bot4s.telegram.models.Message
 
-import collection.mutable.{Buffer, Map}
 
 object UI extends App {
 
@@ -25,7 +23,7 @@ object UI extends App {
 
       // whether empty arguments are allowed
       if (!emptyArgsAllowed) {
-        if (!retVec.forall(!_.isEmpty())) return Left("Empty arguments are not allowed in this input")
+        if (!retVec.forall(_.nonEmpty)) return Left("Empty arguments are not allowed in this input")
       }
 
       Right(retVec)
@@ -36,7 +34,7 @@ object UI extends App {
       
       args match {
         case Left(s) =>
-          return s
+          s
         case Right(v) =>
           val eventName = v(0)
           val (code, e) = Event.createEvent(eventName)
@@ -84,6 +82,34 @@ object UI extends App {
       TGUser.addUserToEvent(id, event)
     }
 
+    def joinEvent(msg: Message) : String = {
+      val args = parseInput(msg, false, false, false)
+      args match {
+        case Left(s) => s
+        case Right(v) => {
+          val eventId = v(0)
+          val userId = msg.chat.id
+
+          var additionalText = ""
+          println(1)
+          // add user to users
+          if (!TGUser.userExists(userId)) {
+            addUser(msg) match {
+              case Left(s) =>
+                return s
+              case Right(s) =>
+                additionalText += s
+            }
+          }
+          println(2)
+          TGUser.addUserToEventCode(userId, eventId) match {
+            case Left(s) => s
+            case Right(s) => s
+          }
+        }
+      }
+    }
+
     def startMessage(message: Message) = {
       "Welcome to Nakkibotti!\n"+
         "/newevent [event name] to create a new event\n"+
@@ -91,9 +117,9 @@ object UI extends App {
         "/help for all commands"
     }
 
-    this.command("createevent", createEvent)
+    this.command("newevent", createEvent)
     this.command("start", startMessage)
-
+    this.command("join", joinEvent)
 
     // Lopuksi Botti pitää vielä saada käyntiin
     this.run()

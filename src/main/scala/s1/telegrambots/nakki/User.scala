@@ -1,6 +1,5 @@
 package s1.telegrambots.nakki
 import scala.collection.mutable.{HashMap, Buffer}
-import com.bot4s.telegram.models.Message
 
 
 object TGUser {
@@ -27,7 +26,15 @@ object TGUser {
   }
 
   def addUserToEventCode(id : Long, eventCode : String) : Either[String, String] = {
-    addUserToEvent(id, Event.eventMap(eventCode))
+    Event.eventMap.get(eventCode) match {
+      case None => {
+        Left("The event with this code does not exist")
+      }
+      case Some(e) => {
+        addUserToEvent(id, Event.eventMap(eventCode))
+      }
+    }
+
   }
 
   def userExists(id : Long) : Boolean = {
@@ -40,6 +47,7 @@ class TGUser(val telegramId: Long, var name: String) {
   var events = Buffer[Event]()
   var currentEvent : Option[Event] = None
 
+  // Adds user, if it is not already in that event
   def addEvent(event : Event) : Either[String, String] = {
     if (events.contains(event)) {
       Left("User is already in that event")
