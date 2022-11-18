@@ -112,18 +112,30 @@ object UI extends App {
 
     // Lisää tehtävän
     def addTask(vector: Vector[String]): Either[String, String] = {
-      if (vector.size < 2)
+      if (vector.size < 1)
         Left("Missing arguments")
       else {
+        var string = ""
+
         // Tehtävän nimi
-        var name = vector.head
-        // Tehtävään tarvittavien määrä
-        var maxPpl = vector.tail.headOption.getOrElse("1").toIntOption.getOrElse(1)
+        val name = vector.head
+        // Tehtävään tarvittavien määrä (oletus 1)
+        val maxPpl = if (vector.length < 2) 1 else vector(1).toIntOption.getOrElse(1)
+        // Tehtävän pistemäärä (oletus 1)
+        val points = if (vector.length < 3) 1 else vector(2).toIntOption.getOrElse(1)
 
         // Uusi tehtävä
-        Event.currentEvent.foreach(a => a.addTask(new Task(name, maxPpl, a)))
+        def createTask(event: Event): Unit = {
+          val task = new Task(name, maxPpl, event)
+          task.points = points
+          event.addTask(task)
 
-        Right("New task " + name + " created.")
+          // Tehtävän kuvaus palautukseen
+          string = task.toString
+        }
+        Event.currentEvent.foreach(createTask)
+
+        if (string.isEmpty) Left("No active event") else Right("New task (" + string + ") created")
       }
     }
 
