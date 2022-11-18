@@ -1,6 +1,8 @@
 package s1.telegrambots.nakki
 import s1.telegrambots.BasicBot
 
+import scala.collection.mutable.Buffer
+
 
 object UI extends App {
 
@@ -162,6 +164,29 @@ object UI extends App {
       Event.currentEvent.foldLeft("List of tasks:\n")(_ + _.tasks.foldLeft("")(_ + _.name + "\n"))
     }
 
+    // Dibsaa tehtävän (tehtävän numeron perusteella)
+    def dibs(vector: Vector[String], message: Message): Either[String, String] = {
+      var tasks: Buffer[Task] = Event.currentEvent.foldLeft(Buffer[Task]())(_ ++ _.tasks)
+      val number = vector.head.toIntOption.getOrElse(-1)
+      val user = TGUser.userMap(message.chat.id)
+
+      if (number < 1 || tasks.size < number) Left("Invalid task number")
+      else user.addTask(tasks(number - 1))
+    }
+
+    // Tehtävään liittyminen
+    def joinTask(msg: Message): String = {
+      val args = parseInput(msg, true, false, false)
+      args match {
+        case Left(s) => s
+        case Right(v) =>
+          dibs(v, msg) match {
+            case Left(s) => s
+            case Right(s) => s
+          }
+      }
+    }
+
     def startMessage(message: Message) = {
       "Welcome to Nakkibotti!\n"+
         "/newevent [event name] to create a new event\n"+
@@ -180,17 +205,26 @@ object UI extends App {
         "\nTasks:\n" +
         "/newtask [task name] (max number of people) (points)\n"+
         "/tasklist List of tasks in the active event\n"+
+        "/dibs Dibs task\n"+
         "\nUsers:\n" +
         "/userlist List of users in the active event"
     }
 
-    this.command("newevent", createEvent)
+    // Yleiset
     this.command("start", startMessage)
-    this.command("join", joinEvent)
-    this.command("newtask", newTask)
-    this.command("userlist", listUsers)
-    this.command("tasklist", listTasks)
     this.command("help", helpMessage)
+
+    // Tapahtumat
+    this.command("newevent", createEvent)
+    this.command("join", joinEvent)
+
+    // Tehtävät
+    this.command("newtask", newTask)
+    this.command("tasklist", listTasks)
+    this.command("dibs", joinTask)
+
+    // Käyttäjät
+    this.command("userlist", listUsers)
 
     // Lopuksi Botti pitää vielä saada käyntiin
     this.run()

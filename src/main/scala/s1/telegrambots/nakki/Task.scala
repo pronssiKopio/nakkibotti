@@ -13,9 +13,13 @@ class Task(var name: String, var maxPpl: Int, event: Event){
   var description: String = ""
   var points: Int = 0
   var status : taskState = notAvailable
-  val users = Buffer[Participant]()
+  var users = Buffer[Participant]()
 
   override def toString = name + ", "+ points + " points, " + status2emoji(status)
   val status2emoji = Map(notAvailable -> "🔜")
+
+  def addUser(participant: Participant): Unit = {
+    if (users.size < maxPpl) users += participant
+  }
 }
 
