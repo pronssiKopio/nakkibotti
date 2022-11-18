@@ -169,12 +169,28 @@ object UI extends App {
         "/help for all commands"
     }
 
+    def helpMessage(message: Message) = {
+      "Commands:\n"+
+        "General:\n"+
+        "/help for all commands\n" +
+        "/start Starts the bot\n" +
+        "\nEvents:\n" +
+        "/newevent [event name] to create a new event\n"+
+        "/join [invite code] to join an event\n"+
+        "\nTasks:\n" +
+        "/newtask [task name] (max number of people) (points)\n"+
+        "/tasklist List of tasks in the active event\n"+
+        "\nUsers:\n" +
+        "/userlist List of users in the active event"
+    }
+
     this.command("newevent", createEvent)
     this.command("start", startMessage)
     this.command("join", joinEvent)
     this.command("newtask", newTask)
     this.command("userlist", listUsers)
     this.command("tasklist", listTasks)
+    this.command("help", helpMessage)
 
     // Lopuksi Botti pitää vielä saada käyntiin
     this.run()
