@@ -110,6 +110,12 @@ object UI extends App {
       }
     }
 
+    // Palauttaa luettelon kaikista tapahtuman käyttäjistä
+    // TODO: Muuta kohta events.lastOption, kun mahdollisuus aktiiviselle tapahtumalle lisätään
+    def listUsers(msg: Message): String = {
+      Event.events.lastOption.foldLeft("List of users:\n")(_ + _.participants.foldLeft("")(_ + _.user.name + "\n"))
+    }
+
     def startMessage(message: Message) = {
       "Welcome to Nakkibotti!\n"+
         "/newevent [event name] to create a new event\n"+
@@ -120,6 +126,7 @@ object UI extends App {
     this.command("newevent", createEvent)
     this.command("start", startMessage)
     this.command("join", joinEvent)
+    this.command("userlist", listUsers)
 
     // Lopuksi Botti pitää vielä saada käyntiin
     this.run()
