@@ -9,7 +9,7 @@ object TGUser {
 
   def addUser(id : Long, name : String) : Either[String, String] = {
 
-    if (userMap.get(id).isDefined) {
+    if (userMap.contains(id)) {
       Left("User already exists")
     } else {
       userMap += (id -> new TGUser(id, name))
@@ -26,12 +26,12 @@ object TGUser {
     }
   }
 
-  def addUserToEventCode(id : Long, eventCode : String) = {
-    ???
+  def addUserToEventCode(id : Long, eventCode : String) : Either[String, String] = {
+    addUserToEvent(id, Event.eventMap(eventCode))
   }
 
   def userExists(id : Long) : Boolean = {
-    userMap.get(id).isDefined
+    userMap.contains(id)
   }
 
 }
