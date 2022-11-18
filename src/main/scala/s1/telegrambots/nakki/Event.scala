@@ -75,6 +75,10 @@ class Event(var name: String, val id: String ) {
     participants += participant
   }
 
+  def addTask(task: Task): Unit = {
+    tasks += task
+  }
+
   override def toString = id + ": "+  name
 
 }

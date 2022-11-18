@@ -110,10 +110,38 @@ object UI extends App {
       }
     }
 
+    // Lisää tehtävän
+    def addTask(vector: Vector[String]): Either[String, String] = {
+      if (vector.size < 2)
+        Left("Missing arguments")
+      else {
+        // Tehtävän nimi
+        var name = vector.head
+        // Tehtävään tarvittavien määrä
+        var maxPpl = vector.tail.headOption.getOrElse("1").toIntOption.getOrElse(1)
+
+        // Uusi tehtävä
+        Event.currentEvent.foreach(a => a.addTask(new Task(name, maxPpl, a)))
+
+        Right("New task " + name + " created.")
+      }
+    }
+
+    // Luo uuden tehtävän
+    def newTask(msg: Message): String = {
+      val args = parseInput(msg, true, true, false)
+      args match {
+        case Left(s) => s
+        case Right(v) =>
+          addTask(v) match {
+            case Left(s) => s
+            case Right(s) => s
+          }
+      }
+    }
+
     // Palauttaa luettelon kaikista tapahtuman käyttäjistä
     def listUsers(msg: Message): String = {
-      println(Event.currentEvent)
-      Event.currentEvent.foreach(e => println(e.participants))
       Event.currentEvent.foldLeft("List of users:\n")(_ + _.participants.foldLeft("")(_ + _.user.name + "\n"))
     }
 
@@ -132,6 +160,7 @@ object UI extends App {
     this.command("newevent", createEvent)
     this.command("start", startMessage)
     this.command("join", joinEvent)
+    this.command("newtask", newTask)
     this.command("userlist", listUsers)
     this.command("tasklist", listTasks)
 
