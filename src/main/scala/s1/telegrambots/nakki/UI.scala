@@ -111,9 +111,13 @@ object UI extends App {
     }
 
     // Palauttaa luettelon kaikista tapahtuman käyttäjistä
-    // TODO: Muuta kohta events.lastOption, kun mahdollisuus aktiiviselle tapahtumalle lisätään
     def listUsers(msg: Message): String = {
-      Event.events.lastOption.foldLeft("List of users:\n")(_ + _.participants.foldLeft("")(_ + _.user.name + "\n"))
+      Event.currentEvent.foldLeft("List of users:\n")(_ + _.participants.foldLeft("")(_ + _.user.name + "\n"))
+    }
+
+    // Palauttaa luettelon kaikista tapahtuman tehtävistä
+    def listTasks(msg: Message): String = {
+      Event.currentEvent.foldLeft("List of tasks:\n")(_ + _.tasks.foldLeft("")(_ + _.name + "\n"))
     }
 
     def startMessage(message: Message) = {
@@ -127,6 +131,7 @@ object UI extends App {
     this.command("start", startMessage)
     this.command("join", joinEvent)
     this.command("userlist", listUsers)
+    this.command("tasklist", listTasks)
 
     // Lopuksi Botti pitää vielä saada käyntiin
     this.run()

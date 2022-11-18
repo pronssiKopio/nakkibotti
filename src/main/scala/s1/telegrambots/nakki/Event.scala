@@ -8,6 +8,9 @@ object Event {
   val eventMap = scala.collection.mutable.HashMap[String, Event]()
   def events = eventMap.values.toVector
 
+  // Tallettaa aktiivisen tapahtuman
+  var currentEvent: Option[Event] = None
+
   // generate access code
   def GAC : String = {
 
@@ -30,6 +33,10 @@ object Event {
     val code = GAC
     val event = new Event(eventName, code)
     eventMap += (code -> event)
+
+    // Muuttaa luodun tapahtuman aktiiviseksi
+    currentEvent = Some(event)
+
     println(code)
     (code, event)
   }
