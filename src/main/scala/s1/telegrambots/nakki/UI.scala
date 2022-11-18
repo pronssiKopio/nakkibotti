@@ -112,6 +112,8 @@ object UI extends App {
 
     // Palauttaa luettelon kaikista tapahtuman käyttäjistä
     def listUsers(msg: Message): String = {
+      println(Event.currentEvent)
+      Event.currentEvent.foreach(e => println(e.participants))
       Event.currentEvent.foldLeft("List of users:\n")(_ + _.participants.foldLeft("")(_ + _.user.name + "\n"))
     }
 

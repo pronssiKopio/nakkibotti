@@ -55,6 +55,9 @@ class TGUser(val telegramId: Long, var name: String) {
       events += event
       currentEvent = Some(event)
 
+      // Lisää käyttäjän tapahtuman käyttäjälistaan
+      event.addParticipant(new Participant(this, false))
+
       Right(s"Succesfully added ${name} to " + event.name)
     }
   }

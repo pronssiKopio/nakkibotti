@@ -36,6 +36,7 @@ object Event {
 
     // Muuttaa luodun tapahtuman aktiiviseksi
     currentEvent = Some(event)
+    println("Aktiivinen tapahtuma: " + eventName)
 
     println(code)
     (code, event)
@@ -69,6 +70,10 @@ class Event(var name: String, val id: String ) {
       val indices = 1 to tasks.size
       (indices zip tasks).map(x => x._1 + " " + x._2).mkString("\n")
     }
+
+  def addParticipant(participant: Participant): Unit = {
+    participants += participant
+  }
 
   override def toString = id + ": "+  name
 
