@@ -205,7 +205,7 @@ object UI extends App {
         "\nTasks:\n" +
         "/newtask [task name] (max number of people) (points)\n"+
         "/tasklist List of tasks in the active event\n"+
-        "/dibs Dibs task\n"+
+        "/dibs Dibs task number\n"+
         "\nUsers:\n" +
         "/userlist List of users in the active event"
     }
