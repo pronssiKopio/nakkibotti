@@ -93,7 +93,6 @@ object UI extends App {
           val userId = msg.chat.id
 
           var additionalText = ""
-          println(1)
           // add user to users
           if (!TGUser.userExists(userId)) {
             addUser(msg) match {
@@ -103,7 +102,6 @@ object UI extends App {
                 additionalText += s
             }
           }
-          println(2)
           TGUser.addUserToEventCode(userId, eventId) match {
             case Left(s) => s
             case Right(s) => s
@@ -187,6 +185,15 @@ object UI extends App {
       }
     }
 
+    def invitation(message: Message): String = {
+
+      TGUser.getCurrentEventForUser(message.chat.id) match {
+        case Right(Some(e: Event)) => e.invitation
+        case Right(None) => "You aren't in any event (no currentEvent)"
+        case Left(s) => s
+      }
+    }
+
     def startMessage(message: Message) = {
       "Welcome to Nakkibotti!\n"+
         "/newevent [event name] to create a new event\n"+
@@ -217,6 +224,7 @@ object UI extends App {
     // Tapahtumat
     this.command("newevent", createEvent)
     this.command("join", joinEvent)
+    this.command("invitation", invitation)
 
     // Tehtävät
     this.command("newtask", newTask)

@@ -7,6 +7,11 @@ object TGUser {
   val userMap = HashMap[Long, TGUser]()
   def users = userMap.values.toVector
 
+  def getCurrentEventForUser(id: Long): Either[String, Option[Event]] = {
+    if (userMap.contains(id)) Right(userMap(id).currentEvent)
+    else Left("You haven't joined any events")
+  }
+
   def addUser(id : Long, name : String) : Either[String, String] = {
 
     if (userMap.contains(id)) {

@@ -81,4 +81,8 @@ class Event(var name: String, val id: String ) {
 
   override def toString = id + ": "+  name
 
+  def invitation: String = {
+    s"Join $name using the code $id on @nakkimukibot"
+  }
+
 }
