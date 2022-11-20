@@ -159,7 +159,7 @@ object UI extends App {
 
     // Palauttaa luettelon kaikista tapahtuman tehtävistä
     def listTasks(msg: Message): String = {
-      Event.currentEvent.foldLeft("List of tasks:\n")(_ + _.tasks.foldLeft("")(_ + _.name + "\n"))
+      Event.currentEvent.foldLeft("List of tasks:\n")(_ + _.tasks.foldLeft("")(_ + _ + "\n"))
     }
 
     // Dibsaa tehtävän (tehtävän numeron perusteella)
@@ -209,10 +209,11 @@ object UI extends App {
         "\nEvents:\n" +
         "/newevent [event name] to create a new event\n"+
         "/join [invite code] to join an event\n"+
+        "/invitation to create an invitation message\n"+
         "\nTasks:\n" +
         "/newtask [task name] (max number of people) (points)\n"+
         "/tasklist List of tasks in the active event\n"+
-        "/dibs Dibs task number\n"+
+        "/dibs Dibs [task number]\n"+
         "\nUsers:\n" +
         "/userlist List of users in the active event"
     }
