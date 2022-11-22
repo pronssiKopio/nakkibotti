@@ -79,13 +79,11 @@ class TGUser(val telegramId: Long, var name: String) {
   }
 
   // Adds user, if it is not already in that task
-  // Tämä metodi täytyy korjata tomimaan ilman nykyisenkaltaista currentParticipantia
   def addTask(task: Task, event: Event) : Either[String, String] = {
     if (tasks.contains(task)) {
       Left("User is already in that task")
     } else {
       tasks += task
-//      currentTask = Some(task)
 
       // Lisää käyttäjän tehtävän käyttäjälistaan
       participant(event).foreach(task.addUser)
