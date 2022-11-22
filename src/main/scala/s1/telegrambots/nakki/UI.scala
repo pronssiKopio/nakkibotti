@@ -110,6 +110,12 @@ object UI extends App {
       }
     }
 
+    // Apukomento: Palauttaa käyttäjän aktiivisen tapahtuman
+    def currentEvent(msg: Message): Option[Event] = {
+      val userID = msg.chat.id
+      if (TGUser.userExists(userID)) TGUser.userMap(msg.chat.id).currentEvent else None
+    }
+
     // Lisää tehtävän
     def addTask(vector: Vector[String]): Either[String, String] = {
       if (vector.size < 1)
@@ -126,7 +132,11 @@ object UI extends App {
 
         // Uusi tehtävä
         def createTask(event: Event): Unit = {
-          val task = new Task(name, maxPpl, event)
+          val id = event.tasks.lastOption match {
+            case Some(t: Task) => t.id + 1
+            case _ => 0
+          }
+          val task = new Task(name, maxPpl, event, id)
           task.points = points
           event.addTask(task)
 
@@ -159,7 +169,10 @@ object UI extends App {
 
     // Palauttaa luettelon kaikista tapahtuman tehtävistä
     def listTasks(msg: Message): String = {
-      Event.currentEvent.foldLeft("List of tasks:\n")(_ + _.tasks.foldLeft("")(_ + _ + "\n"))
+      currentEvent(msg) match {
+        case Some(event) => event.tasksByRelevance
+        case None => "First enter an event"
+      }
     }
 
     // Dibsaa tehtävän (tehtävän numeron perusteella)
