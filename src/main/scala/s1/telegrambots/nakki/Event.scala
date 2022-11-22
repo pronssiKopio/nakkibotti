@@ -52,6 +52,9 @@ object participantState extends Enumeration {
 import participantState._
 
 class Participant(var user : TGUser, var admin : Boolean = false) {
+
+  def name = user.name
+
   var points = 0
   var state : participantState = free
 }
@@ -65,11 +68,10 @@ class Event(var name: String, val id: String ) {
   var hasStarted = false
 
   val tasks: Buffer[Task] = Buffer()
-  def taskList: String =
-    {
-      val indices = 1 to tasks.size
-      (indices zip tasks).map(x => x._1 + " " + x._2).mkString("\n")
-    }
+  def taskList: String = {
+    val indices = 1 to tasks.size
+    (indices zip tasks).map(x => x._1 + " " + x._2).mkString("\n")
+  }
 
   def addParticipant(participant: Participant): Unit = {
     participants += participant
