@@ -118,6 +118,11 @@ object UI extends App {
       if (TGUser.userExists(userID)) TGUser.userMap(msg.chat.id).currentEvent else None
     }
 
+    // Apukomento: Paluttaa käyttäjän TGUser-luokan
+    def user(msg: Message): Option[TGUser] = {
+      TGUser.userMap.get(msg.chat.id)
+    }
+
     // Lisää tehtävän
     def addTask(vector: Vector[String], message: Message): Either[String, String] = {
       if (vector.size < 1)
@@ -174,10 +179,10 @@ object UI extends App {
     def dibs(vector: Vector[String], message: Message): Either[String, String] = {
       var tasks: Buffer[Task] = currentEvent(message).foldLeft(Buffer[Task]())(_ ++ _.tasks)
       val number = vector.head.toIntOption.getOrElse(-1)
-      val user = TGUser.userMap(message.chat.id)
 
       if (number < 1 || tasks.size < number) Left("Invalid task number")
-      else user.addTask(tasks(number - 1))
+      else if (user(message).isDefined) user(message).get.addTask(tasks(number - 1))
+      else Left("Missing user")
     }
 
     // Tehtävään liittyminen
@@ -191,6 +196,11 @@ object UI extends App {
             case Right(s) => s
           }
       }
+    }
+
+    // Omien tehtävien listaus
+    def activeTasks(message: Message): String = {
+      user(message).foldLeft("")(_ + _.tasksInEvent.foldLeft("List of tasks")(_ + "\n" + _.toString))
     }
 
     def startMessage(message: Message) = {
@@ -212,6 +222,7 @@ object UI extends App {
         "/newtask [task name] (max number of people) (points)\n"+
         "/tasklist List of tasks in the active event\n"+
         "/dibs Dibs task number\n"+
+        "/mytasks List of active tasks\n"+
         "\nUsers:\n" +
         "/userlist List of users in the active event"
     }
@@ -228,6 +239,7 @@ object UI extends App {
     this.command("newtask", newTask)
     this.command("tasklist", listTasks)
     this.command("dibs", joinTask)
+    this.command("mytasks", activeTasks)
 
     // Käyttäjät
     this.command("userlist", listUsers)

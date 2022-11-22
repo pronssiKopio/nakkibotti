@@ -92,6 +92,7 @@ class TGUser(val telegramId: Long, var name: String) {
     }
   }
 
+  // Sama kuin ylempi, mutta ottaa aina aktiivisen tapahtuman
   def addTask(task: Task) : Either[String, String] = {
     if (currentEvent.isDefined) {
       addTask(task, currentEvent.get)
@@ -99,6 +100,16 @@ class TGUser(val telegramId: Long, var name: String) {
     else {
       Left("No active event found")
     }
+  }
+
+  // Luettelo tehtävistä tapahtumassa
+  def tasksInEvent(event: Event): Buffer[Task] = {
+    tasks.filter(_.event == event)
+  }
+
+  // Sama kuin ylempi, mutta ottaa aina aktiivisen tapahtuman
+  def tasksInEvent: Buffer[Task] = {
+    currentEvent.foldLeft(Buffer[Task]())(_ ++ tasksInEvent(_))
   }
 
 }
