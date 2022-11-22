@@ -254,6 +254,17 @@ object UI extends App {
       }
     }
 
+    def eventDescription(msg : Message) : String = {
+      TGUser.getCurrentEventForUser(msg.chat.id) match {
+        case Right(Some(e : Event)) =>
+          e.basicInfo
+        case Right(None) =>
+          "You don't have an event selected right now."
+        case Left(s) =>
+          s
+      }
+    }
+
     def switchEvent(message: Message): String = {
       val args = parseInput(message, false, false, false)
       args match {
