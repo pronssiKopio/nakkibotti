@@ -112,8 +112,14 @@ object UI extends App {
       }
     }
 
+    // Apukomento: Palauttaa käyttäjän aktiivisen tapahtuman
+    def currentEvent(msg: Message): Option[Event] = {
+      val userID = msg.chat.id
+      if (TGUser.userExists(userID)) TGUser.userMap(msg.chat.id).currentEvent else None
+    }
+
     // Lisää tehtävän
-    def addTask(vector: Vector[String]): Either[String, String] = {
+    def addTask(vector: Vector[String], message: Message): Either[String, String] = {
       if (vector.size < 1)
         Left("Missing arguments")
       else {
@@ -135,7 +141,7 @@ object UI extends App {
           // Tehtävän kuvaus palautukseen
           string = task.toString
         }
-        Event.currentEvent.foreach(createTask)
+        currentEvent(message).foreach(createTask)
 
         if (string.isEmpty) Left("No active event") else Right("New task (" + string + ") created")
       }
@@ -147,7 +153,7 @@ object UI extends App {
       args match {
         case Left(s) => s
         case Right(v) =>
-          addTask(v) match {
+          addTask(v, msg) match {
             case Left(s) => s
             case Right(s) => s
           }
@@ -156,17 +162,17 @@ object UI extends App {
 
     // Palauttaa luettelon kaikista tapahtuman käyttäjistä
     def listUsers(msg: Message): String = {
-      Event.currentEvent.foldLeft("List of users:\n")(_ + _.participants.foldLeft("")(_ + _.user.name + "\n"))
+      currentEvent(msg).foldLeft("List of users:\n")(_ + _.participants.foldLeft("")(_ + _.user.name + "\n"))
     }
 
     // Palauttaa luettelon kaikista tapahtuman tehtävistä
     def listTasks(msg: Message): String = {
-      Event.currentEvent.foldLeft("List of tasks:\n")(_ + _.tasks.foldLeft("")(_ + _.name + "\n"))
+      currentEvent(msg).foldLeft("List of tasks:\n")(_ + _.tasks.foldLeft("")(_ + _.name + "\n"))
     }
 
     // Dibsaa tehtävän (tehtävän numeron perusteella)
     def dibs(vector: Vector[String], message: Message): Either[String, String] = {
-      var tasks: Buffer[Task] = Event.currentEvent.foldLeft(Buffer[Task]())(_ ++ _.tasks)
+      var tasks: Buffer[Task] = currentEvent(message).foldLeft(Buffer[Task]())(_ ++ _.tasks)
       val number = vector.head.toIntOption.getOrElse(-1)
       val user = TGUser.userMap(message.chat.id)
 

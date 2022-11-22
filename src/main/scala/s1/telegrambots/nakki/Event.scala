@@ -10,7 +10,7 @@ object Event {
 
   // Tallettaa aktiivisen tapahtuman
   // Tämä ei toimi, koska tapahtuman pitää riippua käyttäjästä (tässä oletetaan, että tapahtuma on kaikille käyttäjille sama)
-  var currentEvent: Option[Event] = None
+  // var currentEvent: Option[Event] = None
 
 
   // generate access code
@@ -35,10 +35,6 @@ object Event {
     val code = GAC
     val event = new Event(eventName, code)
     eventMap += (code -> event)
-
-    // Muuttaa luodun tapahtuman aktiiviseksi
-    currentEvent = Some(event)
-    println("Aktiivinen tapahtuma: " + eventName)
 
     println(code)
     (code, event)
