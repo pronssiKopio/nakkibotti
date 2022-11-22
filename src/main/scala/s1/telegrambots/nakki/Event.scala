@@ -8,10 +8,6 @@ object Event {
   val eventMap = scala.collection.mutable.HashMap[String, Event]()
   def events = eventMap.values.toVector
 
-  // Tallettaa aktiivisen tapahtuman
-  // Tämä ei toimi, koska tapahtuman pitää riippua käyttäjästä (tässä oletetaan, että tapahtuma on kaikille käyttäjille sama)
-  // var currentEvent: Option[Event] = None
-
 
   // generate access code
   def GAC : String = {

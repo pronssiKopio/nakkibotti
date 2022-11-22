@@ -57,11 +57,11 @@ class TGUser(val telegramId: Long, var name: String) {
   var tasks = Buffer[Task]()
 
   var currentEvent : Option[Event] = None
-  // !! currentEvent on sitä varten, että käyttäjä voi lähettää useamman komennon ilman, että jokaisessa mainitsee tapahtumaa
-  // Nämä alemmat taas eivät toimi samalla tavalla. Participantilla on arvo state, jota voisi hyödyntää tarkistaakseen onko hän vapaana
-  var currentTask : Option[Task] = None
-  // Käyttäjällä on vain yksi Participant tapahtumaa kohden, ei tarpeellinen
-  var currentParticipant: Option[Participant] = None
+
+  // Palauttaa käyttäjää vastaavan Participant-luokan halutusta tapahtumasta
+  def participant(event: Event): Option[Participant] = {
+    event.participants.find(_.user == this)
+  }
 
   // Adds user, if it is not already in that event
   def addEvent(event : Event) : Either[String, String] = {
@@ -70,11 +70,9 @@ class TGUser(val telegramId: Long, var name: String) {
     } else {
       events += event
       currentEvent = Some(event)
-      // tämän alemman sijaan käyttäjä pitäisi lisätä Eventin puskuriin participants
-      currentParticipant = Some(new Participant(this, false))
 
       // Lisää käyttäjän tapahtuman käyttäjälistaan
-      currentParticipant.foreach(event.addParticipant)
+      event.addParticipant(new Participant(this, false))
 
       Right(s"Succesfully added ${name} to " + event.name)
     }
@@ -82,7 +80,7 @@ class TGUser(val telegramId: Long, var name: String) {
 
   // Adds user, if it is not already in that task
   // Tämä metodi täytyy korjata tomimaan ilman nykyisenkaltaista currentParticipantia
-  def addTask(task: Task) : Either[String, String] = {
+  def addTask(task: Task, event: Event) : Either[String, String] = {
     if (tasks.contains(task)) {
       Left("User is already in that task")
     } else {
@@ -90,9 +88,18 @@ class TGUser(val telegramId: Long, var name: String) {
 //      currentTask = Some(task)
 
       // Lisää käyttäjän tehtävän käyttäjälistaan
-      currentParticipant.foreach(task.addUser)
+      participant(event).foreach(task.addUser)
 
       Right(s"Succesfully added ${name} to " + task.name)
+    }
+  }
+
+  def addTask(task: Task) : Either[String, String] = {
+    if (currentEvent.isDefined) {
+      addTask(task, currentEvent.get)
+    }
+    else {
+      Left("No active event found")
     }
   }
 
