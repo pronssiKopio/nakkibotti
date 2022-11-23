@@ -81,6 +81,15 @@ class TGUser(val telegramId: Long, var name: String) {
     }
   }
 
+  def switchEvent(event : Event): Either[String, String] = {
+    if (events.contains(event)) {
+      currentEvent = Some(event)
+      Right(s"${name} is now working in " + event.name)
+    } else {
+      Left("User hasn't joined this event")
+    }
+  }
+
   // Adds user, if it is not already in that task
   def addTask(task: Task, event: Event) : Either[String, String] = {
     if (task.users.exists(_.user == this)) {

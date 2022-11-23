@@ -175,7 +175,10 @@ object UI extends App {
     // Palauttaa luettelon kaikista tapahtuman tehtävistä
     def listTasks(msg: Message): String = {
       currentEvent(msg) match {
-        case Some(event) => event.tasksByRelevance
+        case Some(event) => event.tasksByRelevance match {
+          case "" => "No tasks in " + event.name
+          case s => s
+        }
         case None => "First enter an event"
       }
     }
@@ -251,6 +254,37 @@ object UI extends App {
       }
     }
 
+    def switchEvent(message: Message): String = {
+      val args = parseInput(message, false, false, false)
+      args match {
+        case Left(s) => s
+        case Right(v) => {
+          val eventName = v(0)
+
+          val userId = message.chat.id
+          val userOption = TGUser.userMap.get(userId)
+          if (userOption.isEmpty) return "no user defined"
+
+          val user = userOption.get
+          val events = user.events
+          val event = events.find(_.name == eventName)
+          event match {
+            case Some(event) => {
+              user.currentEvent = Some(event)
+              s"${user.name} switched to ${event.name}"
+            }
+
+            case None => s"You haven't joined any event with that code."
+          }
+        }
+      }
+    }
+
+    def listEvents(message: Message): String = {
+      val userId = message.chat.id
+      TGUser.userMap(userId).events.foldLeft("Your events:\n")(_ + _.name + "\n")
+    }
+
     def startMessage(message: Message) = {
       "Welcome to Nakkibotti!\n"+
         "/newevent [event name] to create a new event\n"+
@@ -266,6 +300,7 @@ object UI extends App {
         "\nEvents:\n" +
         "/newevent [event name] to create a new event\n"+
         "/join [invite code] to join an event\n"+
+        "/switch [invite code] to work in one of your other events\n"+
         "/invitation to create an invitation message\n"+
         "\nTasks:\n" +
         "/newtask [task name] (max number of people) (points)\n"+
@@ -286,6 +321,8 @@ object UI extends App {
     this.command("newevent", createEvent)
     this.command("join", joinEvent)
     this.command("invitation", invitation)
+    this.command("switch", switchEvent)
+    this.command("eventlist", listEvents)
 
     // Tehtävät
     this.command("newtask", newTask)
