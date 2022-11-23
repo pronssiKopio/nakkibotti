@@ -93,7 +93,6 @@ object UI extends App {
           val userId = msg.chat.id
 
           var additionalText = ""
-          println(1)
           // add user to users
           if (!TGUser.userExists(userId)) {
             addUser(msg) match {
@@ -103,7 +102,6 @@ object UI extends App {
                 additionalText += s
             }
           }
-          println(2)
           TGUser.addUserToEventCode(userId, eventId) match {
             case Left(s) => s
             case Right(s) => s
@@ -139,7 +137,11 @@ object UI extends App {
 
         // Uusi tehtävä
         def createTask(event: Event): Unit = {
-          val task = new Task(name, maxPpl, event)
+          val id = event.tasks.lastOption match {
+            case Some(t: Task) => t.id + 1
+            case _ => 0
+          }
+          val task = new Task(name, maxPpl, event, id)
           task.points = points
           event.addTask(task)
 
@@ -172,7 +174,10 @@ object UI extends App {
 
     // Palauttaa luettelon kaikista tapahtuman tehtävistä
     def listTasks(msg: Message): String = {
-      currentEvent(msg).foldLeft("List of tasks:\n")(_ + _.tasks.foldLeft("")(_ + _.name + "\n"))
+      currentEvent(msg) match {
+        case Some(event) => event.tasksByRelevance
+        case None => "First enter an event"
+      }
     }
 
     // Dibsaa tehtävän (tehtävän numeron perusteella)
@@ -203,6 +208,15 @@ object UI extends App {
       user(message).foldLeft("")(_ + _.tasksInEvent.foldLeft("List of tasks")(_ + "\n" + _.toString))
     }
 
+    def invitation(message: Message): String = {
+
+      TGUser.getCurrentEventForUser(message.chat.id) match {
+        case Right(Some(e: Event)) => e.invitation
+        case Right(None) => "You aren't in any event (no currentEvent)"
+        case Left(s) => s
+      }
+    }
+
     def startMessage(message: Message) = {
       "Welcome to Nakkibotti!\n"+
         "/newevent [event name] to create a new event\n"+
@@ -218,10 +232,11 @@ object UI extends App {
         "\nEvents:\n" +
         "/newevent [event name] to create a new event\n"+
         "/join [invite code] to join an event\n"+
+        "/invitation to create an invitation message\n"+
         "\nTasks:\n" +
         "/newtask [task name] (max number of people) (points)\n"+
         "/tasklist List of tasks in the active event\n"+
-        "/dibs Dibs task number\n"+
+        "/dibs Dibs [task number]\n"+
         "/mytasks List of active tasks\n"+
         "\nUsers:\n" +
         "/userlist List of users in the active event"
@@ -234,6 +249,7 @@ object UI extends App {
     // Tapahtumat
     this.command("newevent", createEvent)
     this.command("join", joinEvent)
+    this.command("invitation", invitation)
 
     // Tehtävät
     this.command("newtask", newTask)
