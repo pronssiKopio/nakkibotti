@@ -1,5 +1,7 @@
 package s1.telegrambots.nakki
 
+import com.bot4s.telegram.models.{Message, PhotoSize}
+
 import scala.collection.mutable.Buffer
 
 object taskStatus extends Enumeration {
@@ -9,7 +11,7 @@ object taskStatus extends Enumeration {
 import taskStatus._
 
 // make sure this has been changed for the new version
-class Task(var name: String, var maxPpl: Int, val event: Event, val id: Int){
+class Task(var name: String, var maxPpl: Int, val event: Event, val id: Int, val message: Message){
   var description: String = ""
   var points: Int = 0
   var status : taskStatus = available
