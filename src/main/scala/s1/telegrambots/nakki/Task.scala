@@ -41,7 +41,7 @@ class Task(var name: String, var maxPpl: Int, val event: Event, val id: Int){
       p.status = participantStatus.free
       p.points += this.points
     })
-    this.users.empty
+    this.users = Buffer()
   }
 
 
