@@ -29,6 +29,7 @@ object Event {
 
   // does not return an Either because this should not be able to fail ever
   def createEvent(eventName : String) : (String, Event) = {
+
     // should throw error if eventName is empty (not return an either left, but throw an error)
     val code = GAC
     val event = new Event(eventName, code)
@@ -95,6 +96,11 @@ class Event(var name: String, val id: String ) {
 
   def addTask(task: Task): Unit = {
     tasks += task
+  }
+
+  def basicInfo : String = {
+    name +
+    "\n\n" + description 
   }
 
   override def toString = id + ": "+  name
