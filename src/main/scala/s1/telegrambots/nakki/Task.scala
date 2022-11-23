@@ -2,17 +2,17 @@ package s1.telegrambots.nakki
 
 import scala.collection.mutable.Buffer
 
-object taskState extends Enumeration {
-  type taskState = Value
+object taskStatus extends Enumeration {
+  type taskStatus = Value
   val notAvailable, available, waitingForMembers, workInProgress, complete = Value
 }
-import taskState._
+import taskStatus._
 
 // make sure this has been changed for the new version
 class Task(var name: String, var maxPpl: Int, val event: Event, val id: Int){
   var description: String = ""
   var points: Int = 0
-  var status : taskState = available
+  var status : taskStatus = available
   var users = Buffer[Participant]()
 
   override def toString = s"$id: $name, ${users.size}/$maxPpl people, $points points, ${status2emoji(status)}"
@@ -25,11 +25,11 @@ class Task(var name: String, var maxPpl: Int, val event: Event, val id: Int){
   )
 
   def addUser(participant: Participant): Boolean = {
-    if (users.size < maxPpl && status != notAvailable && participant.state == participantState.free) {
+    if (users.size < maxPpl && status != notAvailable && participant.status == participantStatus.free) {
       users += participant
       if (users.size == maxPpl) status = workInProgress
       else status = waitingForMembers
-      participant.state = participantState.busy
+      participant.status = participantStatus.busy
       true
     }
     else false
@@ -38,7 +38,7 @@ class Task(var name: String, var maxPpl: Int, val event: Event, val id: Int){
   def finish(): Unit = {
     this.status = complete
     this.users.foreach(p => {
-      p.state = participantState.free
+      p.status = participantStatus.free
       p.points += this.points
     })
     this.users.empty

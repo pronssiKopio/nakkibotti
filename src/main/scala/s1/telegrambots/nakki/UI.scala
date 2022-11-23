@@ -169,7 +169,7 @@ object UI extends App {
 
     // Palauttaa luettelon kaikista tapahtuman käyttäjistä
     def listUsers(msg: Message): String = {
-      currentEvent(msg).foldLeft("List of users:\n")(_ + _.participants.foldLeft("")(_ + _.user.name + "\n"))
+      currentEvent(msg).foldLeft("List of users:\n")(_ + _.participants.foldLeft("")(_ + _.nameWithStatus + "\n"))
     }
 
     // Palauttaa luettelon kaikista tapahtuman tehtävistä

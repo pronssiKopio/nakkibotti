@@ -1,6 +1,6 @@
 package s1.telegrambots.nakki
 
-import s1.telegrambots.nakki.taskState._
+import s1.telegrambots.nakki.taskStatus._
 
 import util.Random.alphanumeric
 import collection.mutable.Buffer
@@ -41,15 +41,24 @@ object Event {
 }
 
 
-object participantState extends Enumeration {
-  type participantState = Value
+object participantStatus extends Enumeration {
+  type participantStatus = Value
   val free, busy = Value
 }
-import participantState._
+import participantStatus._
 
 class Participant(var user : TGUser, var admin : Boolean = false) {
   var points = 0
-  var state : participantState = free
+  var status : participantStatus = free
+
+  def name = user.name
+
+  def nameWithStatus: String = s"$name ${status2emoji(status)}"
+
+  val status2emoji = Map(
+    free -> "😴",
+    busy -> "🥵"
+  )
 }
 
 // The access code doubles as the ID, as they're all unique
@@ -66,16 +75,16 @@ class Event(var name: String, val id: String ) {
   }
   def taskList: String = formatTaskList(tasks)
 
-  def tasksByStatus(status: taskState): Buffer[Task] = {
+  def tasksByStatus(status: taskStatus): Buffer[Task] = {
     tasks.filter(_.status == status)
   }
 
 
   def tasksByRelevance: String = {
     val waiting = tasksByStatus(waitingForMembers)
-    val available = tasksByStatus(taskState.available)
+    val available = tasksByStatus(taskStatus.available)
     val wip = tasksByStatus(workInProgress)
-    val complete = tasksByStatus(taskState.complete)
+    val complete = tasksByStatus(taskStatus.complete)
     val nA = tasksByStatus(notAvailable)
     formatTaskList(waiting ++  available ++ wip ++ complete ++ nA)
   }
