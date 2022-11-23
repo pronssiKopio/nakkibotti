@@ -1,5 +1,7 @@
 package s1.telegrambots.nakki
 
+import s1.telegrambots.nakki.taskState._
+
 import util.Random.alphanumeric
 import collection.mutable.Buffer
 
@@ -8,8 +10,6 @@ object Event {
   val eventMap = scala.collection.mutable.HashMap[String, Event]()
   def events = eventMap.values.toVector
 
-  // Tallettaa aktiivisen tapahtuman
-  var currentEvent: Option[Event] = None
 
   // generate access code
   def GAC : String = {
@@ -34,10 +34,6 @@ object Event {
     val event = new Event(eventName, code)
     eventMap += (code -> event)
 
-    // Muuttaa luodun tapahtuman aktiiviseksi
-    currentEvent = Some(event)
-    println("Aktiivinen tapahtuma: " + eventName)
-
     println(code)
     (code, event)
   }
@@ -52,9 +48,6 @@ object participantState extends Enumeration {
 import participantState._
 
 class Participant(var user : TGUser, var admin : Boolean = false) {
-
-  def name = user.name
-
   var points = 0
   var state : participantState = free
 }
@@ -68,9 +61,23 @@ class Event(var name: String, val id: String ) {
   var hasStarted = false
 
   val tasks: Buffer[Task] = Buffer()
-  def taskList: String = {
-    val indices = 1 to tasks.size
-    (indices zip tasks).map(x => x._1 + " " + x._2).mkString("\n")
+  def formatTaskList(list: Buffer[Task]): String = {
+    list.map(x => x).mkString("\n")
+  }
+  def taskList: String = formatTaskList(tasks)
+
+  def tasksByStatus(status: taskState): Buffer[Task] = {
+    tasks.filter(_.status == status)
+  }
+
+
+  def tasksByRelevance: String = {
+    val waiting = tasksByStatus(waitingForMembers)
+    val available = tasksByStatus(taskState.available)
+    val wip = tasksByStatus(workInProgress)
+    val complete = tasksByStatus(taskState.complete)
+    val nA = tasksByStatus(notAvailable)
+    formatTaskList(waiting ++  available ++ wip ++ complete ++ nA)
   }
 
   def addParticipant(participant: Participant): Unit = {

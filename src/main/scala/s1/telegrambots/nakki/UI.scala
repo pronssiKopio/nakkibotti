@@ -110,8 +110,19 @@ object UI extends App {
       }
     }
 
+    // Apukomento: Palauttaa käyttäjän aktiivisen tapahtuman
+    def currentEvent(msg: Message): Option[Event] = {
+      val userID = msg.chat.id
+      if (TGUser.userExists(userID)) TGUser.userMap(msg.chat.id).currentEvent else None
+    }
+
+    // Apukomento: Paluttaa käyttäjän TGUser-luokan
+    def user(msg: Message): Option[TGUser] = {
+      TGUser.userMap.get(msg.chat.id)
+    }
+
     // Lisää tehtävän
-    def addTask(vector: Vector[String]): Either[String, String] = {
+    def addTask(vector: Vector[String], message: Message): Either[String, String] = {
       if (vector.size < 1)
         Left("Missing arguments")
       else {
@@ -126,14 +137,18 @@ object UI extends App {
 
         // Uusi tehtävä
         def createTask(event: Event): Unit = {
-          val task = new Task(name, maxPpl, event)
+          val id = event.tasks.lastOption match {
+            case Some(t: Task) => t.id + 1
+            case _ => 1
+          }
+          val task = new Task(name, maxPpl, event, id)
           task.points = points
           event.addTask(task)
 
           // Tehtävän kuvaus palautukseen
           string = task.toString
         }
-        Event.currentEvent.foreach(createTask)
+        currentEvent(message).foreach(createTask)
 
         if (string.isEmpty) Left("No active event") else Right("New task (" + string + ") created")
       }
@@ -145,7 +160,7 @@ object UI extends App {
       args match {
         case Left(s) => s
         case Right(v) =>
-          addTask(v) match {
+          addTask(v, msg) match {
             case Left(s) => s
             case Right(s) => s
           }
@@ -154,22 +169,30 @@ object UI extends App {
 
     // Palauttaa luettelon kaikista tapahtuman käyttäjistä
     def listUsers(msg: Message): String = {
-      Event.currentEvent.foldLeft("List of users:\n")(_ + _.participants.foldLeft("")(_ + _.user.name + "\n"))
+      currentEvent(msg).foldLeft("List of users:\n")(_ + _.participants.foldLeft("")(_ + _.user.name + "\n"))
     }
 
     // Palauttaa luettelon kaikista tapahtuman tehtävistä
     def listTasks(msg: Message): String = {
-      Event.currentEvent.foldLeft("List of tasks:\n")(_ + _.tasks.foldLeft("")(_ + _ + "\n"))
+      currentEvent(msg) match {
+        case Some(event) => event.tasksByRelevance
+        case None => "First enter an event"
+      }
     }
 
     // Dibsaa tehtävän (tehtävän numeron perusteella)
     def dibs(vector: Vector[String], message: Message): Either[String, String] = {
-      var tasks: Buffer[Task] = Event.currentEvent.foldLeft(Buffer[Task]())(_ ++ _.tasks)
+      var tasks: Buffer[Task] = currentEvent(message).foldLeft(Buffer[Task]())(_ ++ _.tasks)
       val number = vector.head.toIntOption.getOrElse(-1)
-      val user = TGUser.userMap(message.chat.id)
 
       if (number < 1 || tasks.size < number) Left("Invalid task number")
-      else user.addTask(tasks(number - 1))
+      else if (user(message).isDefined) {
+        tasks.find(_.id == number) match {
+          case Some(t: Task) => user(message).get.addTask(t)
+          case None => Left("Invalid task number.")
+        }
+      }
+      else Left("Missing user")
     }
 
     // Tehtävään liittyminen
@@ -183,6 +206,40 @@ object UI extends App {
             case Right(s) => s
           }
       }
+    }
+
+    def finishTask(msg: Message): String = {
+      def _finish(vector: Vector[String], message: Message): Either[String, String] = {
+      var tasks: Buffer[Task] = currentEvent(message).foldLeft(Buffer[Task]())(_ ++ _.tasks)
+      val number = vector.head.toIntOption.getOrElse(-1)
+
+      if (number < 1 || tasks.size < number) Left("Invalid task number")
+      else if (user(message).isDefined) {
+        tasks.find(_.id == number) match {
+          case Some(t: Task) => Right(user(message).get.finishTask(t))
+          case None => Left("Invalid task number.")
+        }
+      }
+      else Left("Missing user")
+    }
+
+
+      val args = parseInput(msg, true, false, false)
+      args match {
+        case Left(s) => s
+        case Right(v) =>
+          _finish(v, msg) match {
+            case Left(s) => s
+            case Right(s) => s
+          }
+      }
+    }
+
+
+
+    // Omien tehtävien listaus
+    def activeTasks(message: Message): String = {
+      user(message).foldLeft("")(_ + _.tasksInEvent.foldLeft("List of tasks")(_ + "\n" + _.toString))
     }
 
     def invitation(message: Message): String = {
@@ -213,7 +270,10 @@ object UI extends App {
         "\nTasks:\n" +
         "/newtask [task name] (max number of people) (points)\n"+
         "/tasklist List of tasks in the active event\n"+
-        "/dibs Dibs [task number]\n"+
+        "/dibs [task number] to pick up a task\n"+
+        "/finish [task number] to finish a task\n"+
+        "/problem [task number] to report a problem with a task (not implemented)\n"+
+        "/mytasks List of active tasks\n"+
         "\nUsers:\n" +
         "/userlist List of users in the active event"
     }
@@ -231,6 +291,8 @@ object UI extends App {
     this.command("newtask", newTask)
     this.command("tasklist", listTasks)
     this.command("dibs", joinTask)
+    this.command("finish", finishTask)
+    this.command("mytasks", activeTasks)
 
     // Käyttäjät
     this.command("userlist", listUsers)
