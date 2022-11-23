@@ -83,7 +83,7 @@ class Event(var name: String, val id: String ) {
     val wip = tasksByStatus(workInProgress)
     val complete = tasksByStatus(taskState.complete)
     val nA = tasksByStatus(notAvailable)
-    formatTaskList(waiting ++  available ++ wip ++ complete)
+    formatTaskList(waiting ++  available ++ wip ++ complete ++ nA)
   }
 
   def addParticipant(participant: Participant): Unit = {
