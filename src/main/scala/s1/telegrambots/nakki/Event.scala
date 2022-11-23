@@ -62,7 +62,7 @@ class Event(var name: String, val id: String ) {
 
   val tasks: Buffer[Task] = Buffer()
   def formatTaskList(list: Buffer[Task]): String = {
-    list.map(x => x.id + " " + x).mkString("\n")
+    list.map(x => x).mkString("\n")
   }
   def taskList: String = formatTaskList(tasks)
 

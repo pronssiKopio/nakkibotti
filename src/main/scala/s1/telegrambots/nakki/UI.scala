@@ -139,7 +139,7 @@ object UI extends App {
         def createTask(event: Event): Unit = {
           val id = event.tasks.lastOption match {
             case Some(t: Task) => t.id + 1
-            case _ => 0
+            case _ => 1
           }
           val task = new Task(name, maxPpl, event, id)
           task.points = points
@@ -186,7 +186,12 @@ object UI extends App {
       val number = vector.head.toIntOption.getOrElse(-1)
 
       if (number < 1 || tasks.size < number) Left("Invalid task number")
-      else if (user(message).isDefined) user(message).get.addTask(tasks(number - 1))
+      else if (user(message).isDefined) {
+        tasks.find(_.id == number) match {
+          case Some(t: Task) => user(message).get.addTask(t)
+          case None => Left("Invalid task number.")
+        }
+      }
       else Left("Missing user")
     }
 
@@ -202,6 +207,35 @@ object UI extends App {
           }
       }
     }
+
+    def finishTask(msg: Message): String = {
+      def _finish(vector: Vector[String], message: Message): Either[String, String] = {
+      var tasks: Buffer[Task] = currentEvent(message).foldLeft(Buffer[Task]())(_ ++ _.tasks)
+      val number = vector.head.toIntOption.getOrElse(-1)
+
+      if (number < 1 || tasks.size < number) Left("Invalid task number")
+      else if (user(message).isDefined) {
+        tasks.find(_.id == number) match {
+          case Some(t: Task) => Right(user(message).get.finishTask(t))
+          case None => Left("Invalid task number.")
+        }
+      }
+      else Left("Missing user")
+    }
+
+
+      val args = parseInput(msg, true, false, false)
+      args match {
+        case Left(s) => s
+        case Right(v) =>
+          _finish(v, msg) match {
+            case Left(s) => s
+            case Right(s) => s
+          }
+      }
+    }
+
+
 
     // Omien tehtävien listaus
     def activeTasks(message: Message): String = {
@@ -236,7 +270,9 @@ object UI extends App {
         "\nTasks:\n" +
         "/newtask [task name] (max number of people) (points)\n"+
         "/tasklist List of tasks in the active event\n"+
-        "/dibs Dibs [task number]\n"+
+        "/dibs [task number] to pick up a task\n"+
+        "/finish [task number] to finish a task\n"+
+        "/problem [task number] to report a problem with a task (not implemented)\n"+
         "/mytasks List of active tasks\n"+
         "\nUsers:\n" +
         "/userlist List of users in the active event"
@@ -255,6 +291,7 @@ object UI extends App {
     this.command("newtask", newTask)
     this.command("tasklist", listTasks)
     this.command("dibs", joinTask)
+    this.command("finish", finishTask)
     this.command("mytasks", activeTasks)
 
     // Käyttäjät
