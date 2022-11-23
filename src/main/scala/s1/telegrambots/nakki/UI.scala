@@ -134,6 +134,8 @@ object UI extends App {
         val maxPpl = if (vector.length < 2) 1 else vector(1).toIntOption.getOrElse(1)
         // Tehtävän pistemäärä (oletus 1)
         val points = if (vector.length < 3) 1 else vector(2).toIntOption.getOrElse(1)
+        // Tehtävän kuvaus (oletus "")
+        val desc: String = if (vector.length < 4) "" else vector.lift(3).getOrElse("")
 
         // Uusi tehtävä
         def createTask(event: Event): Unit = {
@@ -143,6 +145,7 @@ object UI extends App {
           }
           val task = new Task(name, maxPpl, event, id)
           task.points = points
+          task.description = desc
           event.addTask(task)
 
           // Tehtävän kuvaus palautukseen
@@ -211,15 +214,15 @@ object UI extends App {
       }
     }
 
-    def finishTask(msg: Message): String = {
-      def _finish(vector: Vector[String], message: Message): Either[String, String] = {
-      var tasks: Buffer[Task] = currentEvent(message).foldLeft(Buffer[Task]())(_ ++ _.tasks)
+    def manageTask(msg: Message, action: (Message, Task) => String) = {
+      def manage(vector: Vector[String]): Either[String, String] = {
+      var tasks: Buffer[Task] = currentEvent(msg).foldLeft(Buffer[Task]())(_ ++ _.tasks)
       val number = vector.head.toIntOption.getOrElse(-1)
 
       if (number < 1 || tasks.size < number) Left("Invalid task number")
-      else if (user(message).isDefined) {
+      else if (user(msg).isDefined) {
         tasks.find(_.id == number) match {
-          case Some(t: Task) => Right(user(message).get.finishTask(t))
+          case Some(t: Task) => Right(action(msg, t))
           case None => Left("Invalid task number.")
         }
       }
@@ -231,11 +234,26 @@ object UI extends App {
       args match {
         case Left(s) => s
         case Right(v) =>
-          _finish(v, msg) match {
+          manage(v) match {
             case Left(s) => s
             case Right(s) => s
           }
       }
+    }
+
+
+    def finishTask(msg: Message): String = {
+      def _finish(m: Message, t: Task) = user(msg).get.finishTask(t)
+      manageTask(msg, _finish)
+    }
+
+    def taskInfo(msg: Message): String = {
+      def _info(m: Message, t: Task) = s"${t.toString} " +
+        s"\n\n " +
+        s"${t.description} " +
+        s"\n\nWorking:" +
+        s"\n${if (t.users.nonEmpty) t.users.map(_.name).mkString(",") else "nobody"}"
+      manageTask(msg, _info)
     }
 
 
@@ -318,6 +336,7 @@ object UI extends App {
         "/tasklist List of tasks in the active event\n"+
         "/dibs [task number] to pick up a task\n"+
         "/finish [task number] to finish a task\n"+
+        "/info [task number] to get task description\n"+
         "/problem [task number] to report a problem with a task (not implemented)\n"+
         "/mytasks List of active tasks\n"+
         "\nUsers:\n" +
@@ -340,6 +359,7 @@ object UI extends App {
     this.command("tasklist", listTasks)
     this.command("dibs", joinTask)
     this.command("finish", finishTask)
+    this.command("info", taskInfo)
     this.command("mytasks", activeTasks)
 
     // Käyttäjät
