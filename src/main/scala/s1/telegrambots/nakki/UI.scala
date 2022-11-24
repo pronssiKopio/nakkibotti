@@ -2,7 +2,14 @@ package s1.telegrambots.nakki
 import s1.telegrambots.BasicBot
 
 import scala.collection.mutable.Buffer
-
+import org.jfree.chart.ChartFactory
+import org.jfree.chart.ChartUtils
+import org.jfree.chart.plot.PlotOrientation
+import org.jfree.data.category.DefaultCategoryDataset
+import org.jfree.chart.renderer.category.BarRenderer
+import org.jfree.chart.plot.CategoryPlot
+import org.jfree.chart.axis._
+import java.io.File
 
 object UI extends App {
 
@@ -317,6 +324,29 @@ object UI extends App {
       TGUser.userMap(userId).events.foldLeft("Your events:\n")(_ + _.name + "\n")
     }
 
+    def createPointsStats(message: Message): String = {
+      currentEvent(message) match {
+        case None => "No event - cannot load points stats."
+        case Some(event) => {
+          this.writeToChat("Loading points stats...", message.chat.id)
+          val dcd = new DefaultCategoryDataset
+          event.participants.foreach(participant => dcd.setValue(participant.points, "", participant.user.name))
+          val chart = ChartFactory.createBarChart("Nakkipisteet","Name", "Points", dcd, PlotOrientation.VERTICAL, true, true, false)
+          val categoryPlot = chart.getCategoryPlot
+          val yAxis = categoryPlot.getRangeAxis
+          yAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits())
+          val br = categoryPlot.getRenderer.asInstanceOf[BarRenderer]
+          br.setMaximumBarWidth(.20)
+          val image = new File("pointsstats.png")
+          ChartUtils.saveChartAsPNG(image, chart, 500, 500)
+          this.sendPhoto(image.getPath, message.chat.id)
+          Thread.sleep(3000)
+          if (image.exists) image.delete()
+          "Points stats created."
+        }
+      }
+    }
+
     def startMessage(message: Message) = {
       "Welcome to Nakkibotti!\n"+
         "/newevent [event name] to create a new event\n"+
@@ -367,6 +397,7 @@ object UI extends App {
 
     // Käyttäjät
     this.command("userlist", listUsers)
+    this.command("pointsstats", createPointsStats)
 
     // Lopuksi Botti pitää vielä saada käyntiin
     this.run()
