@@ -143,7 +143,7 @@ object UI extends App {
             case Some(t: Task) => t.id + 1
             case _ => 1
           }
-          val task = new Task(name, maxPpl, event, id)
+          val task = new Task(name, maxPpl, event, id, message)
           task.points = points
           task.description = desc
           event.addTask(task)
@@ -248,11 +248,14 @@ object UI extends App {
     }
 
     def taskInfo(msg: Message): String = {
-      def _info(m: Message, t: Task) = s"${t.toString} " +
-        s"\n\n " +
-        s"${t.description} " +
-        s"\n\nWorking:" +
-        s"\n${if (t.users.nonEmpty) t.users.map(_.name).mkString(",") else "nobody"}"
+      def _info(m: Message, t: Task) = {
+
+        s"${t.toString} " +
+          s"\n\n " +
+          s"${t.description} " +
+          s"\n\nWorking:" +
+          s"\n${if (t.users.nonEmpty) t.users.map(_.name).mkString(",") else "nobody"}"
+      }
       manageTask(msg, _info)
     }
 
@@ -303,7 +306,7 @@ object UI extends App {
               s"${user.name} switched to ${event.name}"
             }
 
-            case None => s"You haven't joined any event with that code."
+            case None => s"You haven't joined any event with that name."
           }
         }
       }
@@ -329,7 +332,7 @@ object UI extends App {
         "\nEvents:\n" +
         "/newevent [event name] to create a new event\n"+
         "/join [invite code] to join an event\n"+
-        "/switch [invite code] to work in one of your other events\n"+
+        "/switch [event name] to work in one of your other events\n"+
         "/invitation to create an invitation message\n"+
         "\nTasks:\n" +
         "/newtask [task name] (max number of people) (points)\n"+
