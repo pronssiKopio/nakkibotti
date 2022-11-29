@@ -1,5 +1,6 @@
 package s1.telegrambots.nakki
 import s1.telegrambots.BasicBot
+import com.bot4s.telegram.methods.ParseMode
 
 import scala.collection.mutable.Buffer
 import org.jfree.chart.ChartFactory
@@ -69,8 +70,8 @@ object UI extends App {
           }
 
           "You have succesfully created " + eventName +
-          "\nInvite others using the access code: " + e.id +
-          s"\n${additionalText}"
+          "\n" + invitation(msg)
+          //s"\n${additionalText}"
       }
     }
 
@@ -381,9 +382,9 @@ object UI extends App {
     this.command("help", helpMessage)
 
     // Tapahtumat
-    this.command("newevent", createEvent)
+    this.command("newevent", createEvent, ParseMode.Markdown)
     this.command("join", joinEvent)
-    this.command("invitation", invitation)
+    this.command("invitation", invitation, ParseMode.Markdown)
     this.command("switch", switchEvent)
     this.command("eventlist", listEvents)
 
@@ -404,6 +405,10 @@ object UI extends App {
 
     println("Started")
   }
+
+  println("Press [ENTER] to shutdown the bot, it may take a few seconds...")
+  scala.io.StdIn.readLine()
+  bot.shutdown()
 
 }
 

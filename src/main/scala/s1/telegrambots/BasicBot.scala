@@ -98,8 +98,8 @@ class BasicBot extends TelegramBot with Polling with Commands[Future] with Callb
     * @param action  A method that returns a string to send as a reply
     * @return
     */
-  def command(command: String, action: Message => String) = {
-    onCommand(command) { implicit msg => request(SendMessage(ChatId.fromChat(msg.chat.id), action(msg), parseMode = Some(ParseMode.HTML))).map(_ => ()) }
+  def command(command: String, action: Message => String, pm : ParseMode.Value = ParseMode.HTML) = {
+    onCommand(command) { implicit msg => request(SendMessage(ChatId.fromChat(msg.chat.id), action(msg), parseMode = Some(pm))).map(_ => ()) }
   }
 
 
@@ -260,6 +260,10 @@ class BasicBot extends TelegramBot with Polling with Commands[Future] with Callb
     */
   def writeToChat(text: String, selectedChatId: ChatId) = {
     request(SendMessage(selectedChatId, text, parseMode = Some(ParseMode.HTML)))
+  }
+
+  def writeToChatMD(text: String, selectedChatId: ChatId) = {
+    request(SendMessage(selectedChatId, text, parseMode = Some(ParseMode.Markdown)))
   }
 
   // Use writeToChat
